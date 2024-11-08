@@ -1,3 +1,17 @@
+''' This is a sequential implementation of the Doob transform problem.
+The parameters are to be modified in the first lines of the code.
+
+All the functional inputs are to be modified from the definitions
+of 'f', 'f_inv', 'f_prime' and 'g'.
+The function 'f' represents the given map and 'f_inv' its inverse,
+whereas 'f_prime' is the determinant of the jacobian in a given point.
+Finally, 'g' is the position-dependant observable.
+
+'''
+
+
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
@@ -21,12 +35,14 @@ div = int(1e3)
 dx = (x_max - x_min)/div
 dy = (y_max - y_min)/div
 # alpha -- alpha parameter for tilting
-alpha = 1.1
+alpha = 1
 
 # save_maps -- whether to save the doob maps in a txt file
 save_maps = False
 # save_rho_D -- whether to save the new invariant density rho_D
 save_rho_D = False
+# plot_all -- whether to plot all the important functions
+plot_all = True
 
 
 def f(x):
@@ -123,10 +139,9 @@ def r_iter(
     z = f_inv(x_center)
 
     # Find index associated to each inverse, x_{i-1} =< z <x_i
-    z_indx0 = (z[0,:]/dy).astype(int)
-    z_indx1 = (z[1,:]/dx).astype(int)
+    z_indx0 = np.digitize(z[0, :], bins=x_lin, right=False) - 1
+    z_indx1 = np.digitize(z[1, :], bins=y_lin, right=False) - 1
 
-    print(np.sum(z_indx1==1000))
 
     g_x = g(x_center)
     g_z = g_x[z_indx1, z_indx0]
@@ -181,8 +196,8 @@ def l_iter(
 
     # Same thing, redundant but maybe can make it clearer
     f_eval = f(x_center)
-    x_indx = (f_eval[0,:]/dx).astype(int)
-    y_indx = (f_eval[1,:]/dy).astype(int)
+    x_indx = np.digitize(f_eval[0,:], bins=x_lin,right=False) - 1
+    y_indx = np.digitize(f_eval[1,:], bins=y_lin,right=False) - 1
     print(f"######Finding lefts with alpha={alpha} ########")
     for i in range(0, iters):
         l_aux = np.exp(alpha*g_x)*l[y_indx, x_indx]
@@ -214,37 +229,12 @@ if __name__ == "__main__":
     x_center[1] -= dy/2.
 
     # Calculating doob map
+    print("Avg observable invariant: ", np.sum(invariant*g(x_center))*dx*dy)
+    print("Avg observable modified: ", np.sum(r*l*g(x_center))*dx*dy)
     gam, doob_map = doob(invariant, l, r, f, x_center, map_range, div)
 
     # -+-+-+-+-+-+-+ Plotting -+-+-+-+-+-+-++-+-++-+
 
-    x_clin = x_lin[1:]-dx/2
-    y_clin = y_lin[1:]-dy/2
-    # Projections of density l, r and r*l onto x axis
-    plot_1d(x_clin, np.sum(r,axis=0)*dy, name="r_x",
-            labels=["x", r"$\rho$"])
-    plot_1d(x_clin, np.sum(l,axis=0)*dy, name="l_x",
-            labels=["x", r"$\rho$"])
-    plot_1d(x_clin, np.sum(l*r,axis=0)*dy, name="l*r_x",
-            labels=["x", r"$\rho$"])
-    # Projections of density l, r and r*l onto y axis
-    plot_1d(y_clin, np.sum(r,axis=1)*dx, name="r_y",
-            labels=["y", r"$\rho$"])
-    plot_1d(y_clin, np.sum(l,axis=1)*dx, name="l_y",
-            labels=["y", r"$\rho$"])
-    plot_1d(y_clin, np.sum(l*r,axis=1)*dx, name="l*r_y",
-            labels=["y", r"$\rho$"])
-
-    plot_2dpow(l, name = "l2d", labels = [r"$x_n$",r"$y_n$",r"$\rho$"],
-            extents=map_range)
-    plot_2dpow(r, name = "r2d", labels = [r"$x_n$",r"$y_n$",r"$\rho$"],
-            extents=map_range)
-    plot_2dpow(l*r, name = "l*r2d", labels = [r"$x_n$",r"$y_n$",r"$\rho$"],
-               extents=map_range)
-    print("Avg observable invariant: ", np.sum(invariant*g(x_center))*dx*dy)
-    print("Avg observable modified: ", np.sum(r*l*g(x_center))*dx*dy)
-
-    # Doob related maps
 
     if save_maps:
     # Saving maps
@@ -253,37 +243,62 @@ if __name__ == "__main__":
     if save_rho_D:
         np.savetxt("rho_D", l*r)
 
-    # Plotting 2d for gamma, base map and  doob
-    plot_2d(gam[0], name="gam_x",
-            labels=[r"$x_n$", r"$y_n$", r"$x_n$"],
-            extents=map_range)
-    plot_2d(gam[1], name="gam_y",
-            labels=[r"$x_n$", r"$y_n$", r"$x_n$"],
-            extents=map_range)
-    plot_2d(f(x_center)[0], name="base_x",
-            labels=[r"$x_n$", r"$y_n$", r"$x_n$"],
-            extents=map_range)
+    if plot_all:
+        x_clin = x_lin[1:]-dx/2
+        y_clin = y_lin[1:]-dy/2
+        # Projections of density l, r and r*l onto x axis
+        plot_1d(x_clin, np.sum(r,axis=0)*dy, name="r_x",
+                labels=["x", r"$\rho$"])
+        plot_1d(x_clin, np.sum(l,axis=0)*dy, name="l_x",
+                labels=["x", r"$\rho$"])
+        plot_1d(x_clin, np.sum(l*r,axis=0)*dy, name="l*r_x",
+                labels=["x", r"$\rho$"])
+        # Projections of density l, r and r*l onto y axis
+        plot_1d(y_clin, np.sum(r,axis=1)*dx, name="r_y",
+                labels=["y", r"$\rho$"])
+        plot_1d(y_clin, np.sum(l,axis=1)*dx, name="l_y",
+                labels=["y", r"$\rho$"])
+        plot_1d(y_clin, np.sum(l*r,axis=1)*dx, name="l*r_y",
+                labels=["y", r"$\rho$"])
 
-    plot_2d(f(x_center)[1], name="base_y",
-            labels=[r"$x_n$", r"$y_n$", r"$y_n$"],
-            extents=map_range)
-    plot_2d(doob_map[0], name="doob_x",
-            labels=[r"$\tilde{x}_n$",
-                    r"$\tilde{y}_n$",
-                    r"$\tilde{x}_{n+1}$"],
-            extents=map_range)
-    plot_2d(doob_map[1], name="doob_y",
-            labels=[r"$\tilde{x}_n$",
-                    r"$\tilde{y}_n$",
-                    r"$\tilde{y}_{n+1}$"],
-            extents=map_range)
-    plot_2d(invariant*g(x_center), name="g(x)",
-            labels=[r"$x$",
-                    r"$y$",
-                    r"$g(x,y)$"],
-            extents=map_range)
-    plot_2d(invariant, name="invariant",
-            labels=[r"$\tilde{x}_n$",
-                    r"$\tilde{y}_n$",
-                    r"$\tilde{y}_{n+1}$"],
-            extents=map_range)
+        plot_2dlog(l, name = "l2d", labels = [r"$x_n$",r"$y_n$",r"$\rho$"],
+                extents=map_range)
+        plot_2dlog(r, name = "r2d", labels = [r"$x_n$",r"$y_n$",r"$\rho$"],
+                extents=map_range)
+        plot_2dlog(l*r, name = "l*r2d", labels = [r"$x_n$",r"$y_n$",r"$\rho$"],
+                   extents=map_range)
+
+        # Plotting 2d for gamma, base map and  doob
+        plot_2d(gam[0], name="gam_x",
+                labels=[r"$x_n$", r"$y_n$", r"$x_n$"],
+                extents=map_range)
+        plot_2d(gam[1], name="gam_y",
+                labels=[r"$x_n$", r"$y_n$", r"$x_n$"],
+                extents=map_range)
+        plot_2d(f(x_center)[0], name="base_x",
+                labels=[r"$x_n$", r"$y_n$", r"$x_n$"],
+                extents=map_range)
+
+        plot_2d(f(x_center)[1], name="base_y",
+                labels=[r"$x_n$", r"$y_n$", r"$y_n$"],
+                extents=map_range)
+        plot_2d(doob_map[0], name="doob_x",
+                labels=[r"$\tilde{x}_n$",
+                        r"$\tilde{y}_n$",
+                        r"$\tilde{x}_{n+1}$"],
+                extents=map_range)
+        plot_2d(doob_map[1], name="doob_y",
+                labels=[r"$\tilde{x}_n$",
+                        r"$\tilde{y}_n$",
+                        r"$\tilde{y}_{n+1}$"],
+                extents=map_range)
+        plot_2d(invariant*g(x_center), name="g(x)",
+                labels=[r"$x$",
+                        r"$y$",
+                        r"$g(x,y)$"],
+                extents=map_range)
+        plot_2d(invariant, name="invariant",
+                labels=[r"$\tilde{x}_n$",
+                        r"$\tilde{y}_n$",
+                        r"$\tilde{y}_{n+1}$"],
+                extents=map_range)

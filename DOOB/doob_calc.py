@@ -19,8 +19,8 @@ def gamma(x_center, x_lin, y_lin, div,
     dx = (x_lin[1]-x_lin[0])
     dy = (y_lin[1]-y_lin[0])
 
-    x_cd = (x_center[0]/dx).astype(int)
-    y_cd = (x_center[1]/dy).astype(int)
+    x_cd = np.digitize(x_center[0],bins=x_lin,right=False) - 1
+    y_cd = np.digitize(x_center[1],bins=y_lin,right=False) - 1
 
     # Inverse coordinates
     x_invcoord = np.searchsorted(cum_doob[0], v = cum_invar[0][x_cd]) - 1
@@ -47,16 +47,15 @@ def gamma_inv(x_center, x_lin, y_lin, div,
     '''
     dx = (x_lin[1]-x_lin[0])
     dy = (y_lin[1]-y_lin[0])
-    x_cd = (x_center[0]/dx).astype(int)
-    y_cd = (x_center[1]/dy).astype(int)
+    x_cd = np.digitize(x_center[0], bins=x_lin, right=False)-1
+    y_cd = np.digitize(x_center[1], bins=y_lin, right=False)-1
     x_invcoord = np.searchsorted(cum_invar[0], v = cum_doob[0][x_cd]) - 1
-    x_invcoord = np.mod(x_invcoord, div)
 
     y_invcoord = classify(x_invcoord, x_cd, y_cd, cum_invar[1], cum_doob[1])
 
 
     # Transforming to position coordinates again
-    coords = np.mod(np.array([x_invcoord, y_invcoord]), div)
+    coords = np.array([x_invcoord, y_invcoord])
     coords[0] = x_lin[0] + coords[0]*dx + dx/2.
     coords[1] = y_lin[0] + coords[1]*dy + dy/2.
 
@@ -78,7 +77,7 @@ def classify(
         for j in range(x.shape[1]):
             a = cum_1[x_gam[i,j]]
             b = cum_2[y[i,j],x[i,j]]
-            y_invcoord[i,j] = np.searchsorted(a,b)
+            y_invcoord[i,j] = np.searchsorted(a,b) - 1
     return y_invcoord
 
 # Calculating doob map
