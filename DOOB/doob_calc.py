@@ -23,7 +23,7 @@ def gamma(x_center, x_lin, y_lin, div,
     y_cd = np.digitize(x_center[1],bins=y_lin,right=False) - 1
 
     # Inverse coordinates
-    x_invcoord = np.searchsorted(cum_doob[0], v = cum_invar[1][x_cd]) - 1
+    x_invcoord = np.searchsorted(cum_doob[0], v = cum_invar[0][x_cd]) - 1
 
     # This is a hotfix because in cum_invar, the zero value to use as bins is
     # not included because of the cumsum, but should be
