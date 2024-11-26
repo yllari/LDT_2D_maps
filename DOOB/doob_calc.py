@@ -23,8 +23,13 @@ def gamma(x_center, x_lin, y_lin, div,
     y_cd = np.digitize(x_center[1],bins=y_lin,right=False) - 1
 
     # Inverse coordinates
-    x_invcoord = np.searchsorted(cum_doob[0], v = cum_invar[0][x_cd]) - 1
+    x_invcoord = np.searchsorted(cum_doob[0], v = cum_invar[1][x_cd]) - 1
+
+    # This is a hotfix because in cum_invar, the zero value to use as bins is
+    # not included because of the cumsum, but should be
+    x_invcoord[x_invcoord == -1] = 0
     y_invcoord = classify(x_invcoord, x_cd, y_cd, cum_doob[1], cum_invar[1])
+    y_invcoord[y_invcoord == -1] = 0
 
     coords = np.array([x_invcoord,y_invcoord])
 
@@ -49,10 +54,11 @@ def gamma_inv(x_center, x_lin, y_lin, div,
     dy = (y_lin[1]-y_lin[0])
     x_cd = np.digitize(x_center[0], bins=x_lin, right=False)-1
     y_cd = np.digitize(x_center[1], bins=y_lin, right=False)-1
+
     x_invcoord = np.searchsorted(cum_invar[0], v = cum_doob[0][x_cd]) - 1
-
+    x_invcoord[x_invcoord == -1] = 0
     y_invcoord = classify(x_invcoord, x_cd, y_cd, cum_invar[1], cum_doob[1])
-
+    y_invcoord[y_invcoord == -1] = 0
 
     # Transforming to position coordinates again
     coords = np.array([x_invcoord, y_invcoord])
@@ -113,7 +119,7 @@ def doob(invariant, l, r,
     P_x = np.sum(invariant,axis = 0)*dy
     cum_invar = [np.cumsum(P_x)*dx,
                  np.cumsum(invariant,axis=0)/P_x*dy]
-
+    #
     #Calculating gamma(f(gamma^{-1}))
     gam_1 = gamma_inv(x_center, x_lin, y_lin, div, cum_doob, cum_invar)
     f_gam = f(gam_1)
