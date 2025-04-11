@@ -29,13 +29,16 @@ y_min = 0.
 y_max = 1.
 map_range = [x_min,x_max,y_min,y_max]
 # iters -- number of iterations for power method
-iters = 10
+iters = 6
 # div -- discretization of space (same for both directions), div x div
-div = int(1e3)
+div = int(3e3)
 dx = (x_max - x_min)/div
 dy = (y_max - y_min)/div
 # alpha -- alpha parameter for tilting
 alpha = 1
+
+# bijective -- whether the map is invertible or not
+bijective = True
 
 # save_maps -- whether to save the doob maps in a txt file
 save_maps = False
@@ -151,7 +154,8 @@ def r_iter(
     for i in range(0,iters):
         # This can be optimized, expressed like this for clarity
         r_aux = np.exp(alpha*g_z)*r[z_indx1, z_indx0]/fprime_z
-        # r = np.sum(r_aux,axis=0) #Uncomment if f is not bijective
+        if not bijective:
+                r_aux = np.sum(r_aux,axis=0)
         r_ev = np.sum(r_aux)*dx*dy
         print(i, r"lambda="+str(r_ev))
         # Renormalization
@@ -261,11 +265,11 @@ if __name__ == "__main__":
         plot_1d(y_clin, np.sum(l*r,axis=1)*dx, name="l*r_y",
                 labels=["y", r"$\rho$"])
 
-        plot_2dlog(l, name = "l2d", labels = [r"$x_n$",r"$y_n$",r"$\rho$"],
+        plot_2d(l, name = "l2d", labels = [r"$x_n$",r"$y_n$",r"$\rho$"],
                 extents=map_range)
-        plot_2dlog(r, name = "r2d", labels = [r"$x_n$",r"$y_n$",r"$\rho$"],
+        plot_2d(r, name = "r2d", labels = [r"$x_n$",r"$y_n$",r"$\rho$"],
                 extents=map_range)
-        plot_2dlog(l*r, name = "l*r2d", labels = [r"$x_n$",r"$y_n$",r"$\rho$"],
+        plot_2d(l*r, name = "l*r2d", labels = [r"$x_n$",r"$y_n$",r"$\rho$"],
                    extents=map_range)
 
         # Plotting 2d for gamma, base map and  doob
